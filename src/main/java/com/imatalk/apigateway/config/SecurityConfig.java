@@ -32,6 +32,8 @@ public class SecurityConfig {
                 .authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec
                         .pathMatchers( "/eureka/**",
                                 "/api/auth/health",
+                                "/api/auth/login",
+                                "/api/auth/register",
                                 "/api/user/health",
                                 "/api/chat/health",
                                 "/api/notification/health",

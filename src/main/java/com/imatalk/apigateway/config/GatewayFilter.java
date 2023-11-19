@@ -3,6 +3,9 @@ package com.imatalk.apigateway.config;
 import com.imatalk.apigateway.service.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
@@ -20,20 +23,23 @@ public class GatewayFilter implements WebFilter {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String jwt = extractTokenFromRequest(exchange);
-        //TODO: check if the request is for websocket
-        // if the request is for websocket, then we don't need to validate the token
-        // because the token is already validated in the http request
-        // if the request is for http, then we need to validate the token
-        // but if the request is to permit-all endpoint, then we don't need to validate the token
         if (jwt != null) {
 
                 if (jwtService.validateToken(jwt)) {
                     String id = jwtService.extractId(jwt);
                     String email = jwtService.extractEmail(jwt);
 
+                    // set the UsernamePasswordAuthenticationToken as principal in the SecurityWebFiltersOrder
+                    exchange.getAttributes().put("id", id);
+                    exchange.getAttributes().put("email", email);
+
+                    UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(id, null, List.of());
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+
                     // set the id as header key currentUserId in the request
                     exchange.getRequest().mutate().headers(httpHeaders -> httpHeaders.set("currentUserId", id));
-                    return chain.filter(exchange);
+                    return chain.filter(exchange).contextWrite(ReactiveSecurityContextHolder.withAuthentication(authenticationToken));
                 }
 
         }

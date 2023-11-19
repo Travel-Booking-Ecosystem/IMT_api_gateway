@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 @RequiredArgsConstructor
 public class GatewayConfig {
 
-    @Bean
+//    @Bean
     public RouteLocator routes(RouteLocatorBuilder builder) {
         return builder.routes()
                 .route(r -> r.path("/api/user/**")
